@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bulk Chat</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ECE5DD;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #075E54;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .form-section, .contacts-section, .links-section {
+            padding: 15px 20px;
+        }
+
+        .form-section h2, .contacts-section h2, .links-section h2 {
+            font-size: 16px;
+            color: #075E54;
+            margin-bottom: 10px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #25D366;
+            color: white;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #128C7E;
+        }
+
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-item button {
+            background-color: #FF4D4D;
+            color: white;
+            padding: 5px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .contact-item button:hover {
+            background-color: #E60000;
+        }
+
+        #links-container a {
+            display: block;
+            margin: 5px 0;
+            text-decoration: none;
+            color: #128C7E;
+            font-size: 14px;
+        }
+
+        #links-container a:hover {
+            text-decoration: underline;
+        }
+
+        #sendAllBtn {
+            margin-top: 15px;
+            font-size: 14px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            WhatsApp Bulk Chat
+        </div>
+
+        <!-- Add Contact Section -->
+        <div class="form-section">
+            <h2>Add New Contact</h2>
+            <form id="contactForm">
+                <input type="text" id="contactName" placeholder="Enter contact name (optional)" />
+                <input type="text" id="contactNumber" placeholder="Enter WhatsApp number" />
+                <button type="submit">Add Contact</button>
+            </form>
+        </div>
+
+        <!-- Saved Contacts Section -->
+        <div class="contacts-section">
+            <h2>Saved Contacts</h2>
+            <div id="contacts-container">
+                <!-- Contacts will be listed here -->
+            </div>
+        </div>
+
+        <!-- Create Chat Section -->
+        <div class="form-section">
+            <h2>Create Chat</h2>
+            <form id="chatForm">
+                <select id="contactList" multiple style="height: 120px;">
+                    <!-- Contacts will populate here -->
+                </select>
+                <textarea id="message" placeholder="Enter your message" rows="4"></textarea>
+                <button type="submit">Generate Links</button>
+            </form>
+        </div>
+
+        <!-- Generated Links Section -->
+        <div class="links-section">
+            <h2>Generated Links</h2>
+            <div id="links-container">
+                <!-- Links will appear here -->
+            </div>
+            <button id="sendAllBtn" style="display: none;">Send Message to All</button>
+        </div>
+    </div>
+
+    <script>
+        let contacts = [];
+        let generatedLinks = [];
+
+        // Load contacts on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            loadContacts();
+        });
+
+        // Add new contact
+        document.getElementById("contactForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById("contactName").value.trim();
+            const number = document.getElementById("contactNumber").value.trim();
+
+            if (!number || !/^\d+$/.test(number)) {
+                alert("Please provide a valid phone number.");
+                return;
+            }
+
+            contacts.push({ name: name || number, number });
+            localStorage.setItem("contacts", JSON.stringify(contacts));
+            loadContacts();
+            document.getElementById("contactForm").reset();
+        });
+
+        // Load contacts from localStorage
+        function loadContacts() {
+            contacts = JSON.parse(localStorage.getItem("contacts")) || [];
+            const contactsContainer = document.getElementById("contacts-container");
+            const contactList = document.getElementById("contactList");
+
+            contactsContainer.innerHTML = '';
+            contactList.innerHTML = '';
+
+            contacts.forEach((contact, index) => {
+                // Display in contacts list
+                const div = document.createElement("div");
+                div.className = "contact-item";
+                div.innerHTML = `
+                    <div><strong>${contact.name}</strong> (+${contact.number})</div>
+                    <button onclick="deleteContact(${index})">Delete</button>
+                `;
+                contactsContainer.appendChild(div);
+
+                // Add to dropdown for selection
+                const option = document.createElement("option");
+                option.value = contact.number;
+                option.textContent = `${contact.name} (+${contact.number})`;
+                contactList.appendChild(option);
+            });
+        }
+
+        // Delete contact
+        function deleteContact(index) {
+            contacts.splice(index, 1);
+            localStorage.setItem("contacts", JSON.stringify(contacts));
+            loadContacts();
+        }
+
+        // Generate WhatsApp links
+        document.getElementById("chatForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const selectedContacts = Array.from(document.getElementById("contactList").selectedOptions);
+            const messageInput = document.getElementById("message").value;
+
+            if (selectedContacts.length === 0 || !messageInput) {
+                alert("Please select contacts and enter a message.");
+                return;
+            }
+
+            const linksContainer = document.getElementById("links-container");
+            linksContainer.innerHTML = '';
+            generatedLinks = [];
+
+            selectedContacts.forEach(option => {
+                const number = option.value;
+                const message = encodeURIComponent(messageInput);
+                const link = `https://wa.me/${number}?text=${message}`;
+                const a = document.createElement("a");
+                a.href = link;
+                a.target = "_blank";
+                a.innerText = `Chat with ${option.textContent}`;
+                linksContainer.appendChild(a);
+                generatedLinks.push(link);
+            });
+
+            if (generatedLinks.length > 0) {
+                document.getElementById("sendAllBtn").style.display = 'block';
+            }
+        });
+
+        // Send all links at once
+        document.getElementById("sendAllBtn").addEventListener("click", function () {
+            generatedLinks.forEach(link => {
+                window.open(link, '_blank');
+            });
+        });
+    </script>
+</body>
+</html>
