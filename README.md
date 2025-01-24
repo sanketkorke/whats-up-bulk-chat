@@ -1,1 +1,1 @@
-# whats-up-bulk-chat
+# whatsapp-bulk-chat
